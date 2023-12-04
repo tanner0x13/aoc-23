@@ -1,6 +1,20 @@
 #include <stdio.h>
+#include <string.h>
 
 #define MAX_LINE_LENGTH 256
+
+
+const char *NUM_STRINGS[] = {
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+};
 
 int fpeekc(FILE* fp) {
     int c = fgetc(fp);
@@ -16,6 +30,15 @@ void get_next_line(FILE *fp, char *buffer) {
         buffer[i++] = (char)c;
     }
     buffer[i] = '\0';
+}
+
+int get_string_as_int(const char *string) {
+    for(int i = 0; i < 9; i++) {
+        if(strncmp(string, NUM_STRINGS[i], strlen(NUM_STRINGS[i])) == 0) {
+            return i + 1;
+        }
+    }
+    return -1;
 }
 
 int main(int argc, char *argv[]) {
@@ -36,7 +59,6 @@ int main(int argc, char *argv[]) {
         // extract the next line from the file
         char buffer[MAX_LINE_LENGTH];
         get_next_line(fp, buffer);
-        printf("%s\n", buffer);
 
         // initialize first/last digit - digits must be positive so negative values represent un-set/invalid
         int first_digit = -1;
@@ -51,14 +73,21 @@ int main(int argc, char *argv[]) {
                 if(first_digit < 0) { first_digit = val; }
                 last_digit = val;
                 curr++;
-            } else if(0) {
-                // case 2: the char is the beginning of a substr spelling out a number (i.e. 'one')
-
             } else {
-                // case 3: nothing to see here, move along
-                curr++;
+                int val = get_string_as_int(curr);
+                if(val >= 0) {
+                    // case 2: the char is the first char of a string which says what number it is (e.g. 'one')
+                    if(first_digit < 0) { first_digit = val; }
+                    last_digit = val;
+                    curr += strlen(NUM_STRINGS[val-1]) - 1;
+                } else {
+                    // case 3: nothing to see here, move along
+                    curr++;
+                }
             }
         }
+
+        printf("%s (%d, %d)\n", buffer, first_digit, last_digit);
 
         // combine digits and add to sum
         sum += (10 * first_digit) + last_digit;
