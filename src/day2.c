@@ -120,16 +120,21 @@ int main(int argc, char *argv[]) {
         game_t game = {0};
         tokenize(lineBuf, &game);
         print_game(&game);
-        int possible = 1;
+        int redRequired = 0;
+        int greenRequired = 0;
+        int blueRequired = 0;
         for(int i = 0; i < game.numPulls; i++) {
-            if(game.pulls[i].red > 12 || game.pulls[i].green > 13 || game.pulls[i].blue > 14) {
-                possible = 0;
-                break;
+            if(game.pulls[i].red > redRequired) {
+                redRequired = game.pulls[i].red;
+            }
+            if(game.pulls[i].green > greenRequired) {
+                greenRequired = game.pulls[i].green;
+            }
+            if(game.pulls[i].blue > blueRequired) {
+                blueRequired = game.pulls[i].blue;
             }
         }
-        if(possible) {
-            sum += game.gameId;
-        }
+        sum += redRequired * greenRequired * blueRequired;
     }
 
     printf("Answer: %d\n", sum);
