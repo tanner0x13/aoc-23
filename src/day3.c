@@ -4,6 +4,11 @@
 #include <string.h>
 #include <strings.h>
 
+typedef struct {
+    int product;
+    int visits;
+} product_t;
+
 // get the character at a given row, col in a board of given dimensions
 char get_token_from_board(char *board, int row, int col, int width, int height) {
     if(row < 0 || row >= height || col < 0 || col >= width) {
@@ -71,7 +76,15 @@ int main(int argc, char *argv[]) {
         printf("\n");
     }
 
-    int sum = 0;
+    // create mirror board to keep track of adjaceny products
+    product_t *products = malloc(sizeof(product_t) * width * height);
+    for(int row = 0; row < height; row++) {
+        for(int col = 0; col < width; col++) {
+            product_t *p = &products[(row * width) + col];
+            p->product = 1;
+            p->visits = 0;
+        }
+    }
 
     // iterate over each char in board looking for numbers
     for(int row = 0; row < height; row++) {
@@ -95,30 +108,91 @@ int main(int argc, char *argv[]) {
                 }
                 printf("number found at (%d,%d) = %d\n", row, left_bound, value);
 
-                // check for an adjacent symbol first to the left/right of the bounds
-                int can_include = 0;
-                if(is_symbol(board, row-1, left_bound-1, width, height) ||      // north-west
-                    is_symbol(board, row, left_bound-1, width, height) ||       // west
-                    is_symbol(board, row+1, left_bound-1, width, height) ||     // south-west
-                    is_symbol(board, row-1, right_bound+1, width, height) ||    // north-east
-                    is_symbol(board, row, right_bound+1, width, height) ||      // east
-                    is_symbol(board, row+1, right_bound+1, width, height)) {    // south-east
-                    can_include = 1;
-                }
-                // now above and below
-                for(int i = left_bound; i <= right_bound; i++) {
-                    if(is_symbol(board, row-1, i, width, height) ||             // north
-                        is_symbol(board, row+1, i, width, height)) {            // south
-                        can_include = 1;
+                // multiply the value into all its adjacent symbol cells
+                {   // north
+                    int r = row - 1;
+                    for(int c = left_bound; c <= right_bound; c++) {
+                        if(is_symbol(board, r, c, width, height)) {
+                            product_t *p = &products[(r * width) + c];
+                            p->visits += 1;
+                            p->product *= value;
+                        }
                     }
                 }
-
-                // add number to sum if adjacency rule satisfied
-                if(can_include) {
-                    printf("adjancent symbol found. %d + %d = ", sum, value);
-                    sum += value;
-                    printf("%d\n", sum);
+                {   // north-east
+                    int r = row - 1;
+                    int c = right_bound + 1;
+                    if(is_symbol(board, r, c, width, height)) {
+                        product_t *p = &products[(r * width) + c];
+                        p->visits += 1;
+                        p->product *= value;
+                    }
                 }
+                {   // east
+                    int r = row;
+                    int c = right_bound + 1;
+                    if(is_symbol(board, r, c, width, height)) {
+                        product_t *p = &products[(r * width) + c];
+                        p->visits += 1;
+                        p->product *= value;
+                    }
+                }
+                {   // south-east
+                    int r = row + 1;
+                    int c = right_bound + 1;
+                    if(is_symbol(board, r, c, width, height)) {
+                        product_t *p = &products[(r * width) + c];
+                        p->visits += 1;
+                        p->product *= value;
+                    }
+                }
+                {   // south
+                    int r = row + 1;
+                    for(int c = left_bound; c <= right_bound; c++) {
+                        if(is_symbol(board, r, c, width, height)) {
+                            product_t *p = &products[(r * width) + c];
+                            p->visits += 1;
+                            p->product *= value;
+                        }
+                    }
+                }
+                {   // south-west
+                    int r = row + 1;
+                    int c = left_bound - 1;
+                    if(is_symbol(board, r, c, width, height)) {
+                        product_t *p = &products[(r * width) + c];
+                        p->visits += 1;
+                        p->product *= value;
+                    }
+                }
+                {   // west
+                    int r = row;
+                    int c = left_bound - 1;
+                    if(is_symbol(board, r, c, width, height)) {
+                        product_t *p = &products[(r * width) + c];
+                        p->visits += 1;
+                        p->product *= value;
+                    }
+                }
+                {   // north-west
+                    int r = row - 1;
+                    int c = left_bound - 1;
+                    if(is_symbol(board, r, c, width, height)) {
+                        product_t *p = &products[(r * width) + c];
+                        p->visits += 1;
+                        p->product *= value;
+                    }
+                }
+            }
+        }
+    }
+
+    // iterate over board looking for * and cells in products that where visits == 2. add to sum
+    int sum = 0;
+    for(int row = 0; row < height; row++) {
+        for(int col = 0; col < width; col++) {
+            if(board[(row * width) + col] == '*' && products[(row * width) + col].visits == 2) {
+                sum += products[(row * width) + col].product;
             }
         }
     }
@@ -128,6 +202,7 @@ int main(int argc, char *argv[]) {
 
     // cleanup and return
     free(board);
+    free(products);
     fclose(fp);
     return 0;
 }
