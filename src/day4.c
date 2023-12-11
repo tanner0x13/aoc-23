@@ -1,13 +1,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-void set_nth_bit(char *set, int n) {
-    set[n] = 1;
-}
-
-bool test_nth_bit(const char *set, int n) {
-    return set[n] > 0;
-}
+typedef struct {
+    int num;
+    int copies;
+    bool winning_number_set[100];
+} scratcher_t ;
 
 
 int main(int argc, char *argv[]) {
@@ -22,35 +20,37 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int total = 0;
+    scratcher_t scratchers[256] = {0};
+    int total_scratchers_played = 0;
 
+    int index = 0;
     while(!feof(fp)) {
-        int card_value = 0;
-        char set[100] = {0};
+        scratcher_t *scratcher = &scratchers[index];
+        total_scratchers_played += 1 + scratcher->copies;
         // scan past 'Card x:' string on each line
         fscanf(fp, "%*s %*d %*c");
         // read each winning numbers
         int winning_num;
         while(fscanf(fp, "%d", &winning_num) > 0) {
-            set_nth_bit(set, winning_num);
+            scratcher->winning_number_set[winning_num] = true;
         }
         // discard '|' character
         fscanf(fp, "%*c");
         // read scratcher numbers
+        int wins = 0;
         int scratcher_num;
         while(fscanf(fp, "%d", &scratcher_num) > 0) {
-            if(test_nth_bit(set, scratcher_num)) {
-                if(card_value) {
-                    card_value *= 2;
-                } else {
-                    card_value = 1;
-                }
+            if(scratcher->winning_number_set[scratcher_num]) {
+                wins++;
             }
         }
-
-        total += card_value;
+        // add copies to n cards beneath current index where n = `wins`
+        for(int i = index+1; i <= index + wins; i++) {
+            scratchers[i].copies += 1 + scratcher->copies;
+        }
+        index++;
     }
 
-    printf("Answer: %d\n", total);
+    printf("Answer: %d\n", total_scratchers_played);
     return 0;
 }
