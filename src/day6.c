@@ -1,10 +1,12 @@
+#include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 #define MAX_NUM_RACES 16
 
 struct race {
-    int time;
-    int distance;
+    unsigned long time;
+    unsigned long distance;
 };
 
 int main(int argc, char *argv[]) {
@@ -19,59 +21,75 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    struct race races[MAX_NUM_RACES];
-    int num_races = 0;
+
+    struct race r = {};
 
     // read in times
-    fscanf(fp, "%*s");
-    int t;
-    while(fscanf(fp, "%d", &t) > 0) {
-        printf("%d\n", t);
-        races[num_races++].time = t;
+    {
+        char line[64];
+        fgets(line, 64, fp);
+        line[strlen(line)-1] = '\0';
+        char *pch;
+        pch = strtok(line, " ");
+        while(pch != NULL) {
+            pch = strtok(NULL, " ");
+            if(pch) {
+                for(int i = 0; i < strlen(pch); i++) {
+                    int t = pch[i] - '0';
+                    r.time = (r.time * 10) + t;
+                }
+            }
+        }
     }
 
-    // read in times
-    num_races = 0;
-    fscanf(fp, "%*s");
-    int d;
-    while(fscanf(fp, "%d", &d) > 0) {
-        printf("%d\n", d);
-        races[num_races++].distance = d;
+    // read in distances
+    {
+        char line[64];
+        fgets(line, 64, fp);
+        line[strlen(line)-1] = '\0';
+        char *pch;
+        pch = strtok(line, " ");
+        while(pch != NULL) {
+            pch = strtok(NULL, " ");
+            if(pch) {
+                for(int i = 0; i < strlen(pch); i++) {
+                    int d = pch[i] - '0';
+                    r.distance = (r.distance * 10) + d;
+                }
+            }
+        }
     }
 
-    int product = 1;
-    for(int i = 0; i < num_races; i++) {
-        struct race *r = &races[i];
+    printf("time: %lu, distance: %lu\n", r.time, r.distance);
+
         // approach from the left - find minimum time charging
-        int t1 = 0;
-        while(t1 <= r->time) {
-            int velocity = t1;
-            int time_remaining = r->time - t1;
-            int distance_possible = velocity * time_remaining;
-            if(distance_possible > r->distance) {
-                break;
-            }
-            t1++;
+    int t1 = 0;
+    while(t1 <= r.time) {
+        unsigned long velocity = t1;
+        unsigned long time_remaining = r.time - t1;
+        unsigned long distance_possible = velocity * time_remaining;
+        if(distance_possible > r.distance) {
+            break;
         }
-        printf("t1 = %d\n", t1);
-        // approach from the right - find maximum time charging
-        int t2 = r->time;
-        while(t2 >= 0) {
-            int velocity = t2;
-            int time_remaining = r->time - t2;
-            int distance_possible = velocity * time_remaining;
-            if(distance_possible > r->distance) {
-                break;
-            }
-            t2--;
-        }
-        printf("t2 = %d\n", t2);
-
-        product *= ((t2 - t1) + 1);
+        t1++;
     }
+    printf("t1 = %d\n", t1);
+    // approach from the right - find maximum time charging
+    int t2 = r.time;
+    while(t2 >= 0) {
+        unsigned long velocity = t2;
+        unsigned long time_remaining = r.time - t2;
+        unsigned long distance_possible = velocity * time_remaining;
+        if(distance_possible > r.distance) {
+            break;
+        }
+        t2--;
+    }
+    printf("t2 = %d\n", t2);
 
+    unsigned long answer = (t2 - t1) + 1;
 
-    printf("Answer: %d\n", product);
+    printf("Answer: %lu\n", answer);
     fclose(fp);
     return 0;
 }
