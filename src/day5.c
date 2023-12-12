@@ -23,6 +23,11 @@ struct node {
     struct node *next;
 };
 
+struct seed_range {
+    unsigned long start;
+    unsigned long length;
+};
+
 unsigned long apply_map(const struct map *map, unsigned long input) {
     for(int i = 0; i < map->num_rules; i++) {
         const struct map_rule *rule = &map->rules[i];
@@ -46,13 +51,16 @@ int main(int argc, char *argv[]) {
     }
 
     // read the seeds from the input file
-    unsigned long seeds[MAX_INPUT_SEEDS];
+    struct seed_range seeds[MAX_INPUT_SEEDS];
     int num_seeds = 0;
     {
         fscanf(fp, "%*s");
-        unsigned long seed;
-        while(fscanf(fp, "%lu", &seed)) {
-            seeds[num_seeds++] = seed;
+        unsigned long start;
+        unsigned long length;
+        while(fscanf(fp, "%lu %lu", &start, &length)) {
+            seeds[num_seeds].start = start;
+            seeds[num_seeds].length = length;
+            num_seeds++;
         }
     }
 
@@ -101,14 +109,16 @@ int main(int argc, char *argv[]) {
     // for each input seed, go through mapping chain and keep track of min location id
     unsigned long min_location_id = UINT64_MAX;
     for(int i = 0; i < num_seeds; i++) {
-        unsigned long input = seeds[i];
-        struct node *current = head;
-        while(current) {
-            input = apply_map(&current->map, input);
-            current = current->next;
-        }
-        if(input < min_location_id) {
-            min_location_id = input;
+        for(unsigned long j = 0; j < seeds[i].length; j++) {
+            unsigned long input = seeds[i].start + j;
+            struct node *current = head;
+            while(current) {
+                input = apply_map(&current->map, input);
+                current = current->next;
+            }
+            if(input < min_location_id) {
+                min_location_id = input;
+            }
         }
     }
 
