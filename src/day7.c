@@ -4,6 +4,7 @@
 #define NUM_CARDS_PER_HAND 5
 
 enum card {
+    JOKER,
     TWO,
     THREE,
     FOUR,
@@ -13,7 +14,6 @@ enum card {
     EIGHT,
     NINE,
     TEN,
-    JACK,
     QUEEN,
     KING,
     ACE,
@@ -83,7 +83,7 @@ enum card char_to_card(char c) {
         } break;
 
         case 'J': {
-            result = JACK;
+            result = JOKER;
         } break;
 
         case 'Q': {
@@ -144,7 +144,7 @@ char card_to_char(enum card c) {
             result = 'T';
         } break;
 
-        case JACK: {
+        case JOKER: {
             result = 'J';
         } break;
 
@@ -171,44 +171,75 @@ void set_hand_rating(struct hand *h) {
     int joker_counter = 0;
     int set[CARD_COUNT] = {};
     for(int i = 0; i < NUM_CARDS_PER_HAND; i++) {
-        int seen = ++set[h->cards[i]];
-        switch (seen) {
-            case 2: {
-                if(h->rating == HIGH_CARD) {
-                    h->rating = ONE_PAIR;
-                } else if(h->rating == ONE_PAIR) {
-                    h->rating = TWO_PAIR;
-                } else if(h->rating == THREE_OF_A_KIND) {
-                    h->rating = FULL_HOUSE;
-                } else {
-                    printf("impossible pairing\n");
-                }
+        if(h->cards[i] == JOKER) {
+            joker_counter++;
+        } else {
+            int seen = ++set[h->cards[i]];
+            switch (seen) {
+                case 2: {
+                    if(h->rating == HIGH_CARD) {
+                        h->rating = ONE_PAIR;
+                    } else if(h->rating == ONE_PAIR) {
+                        h->rating = TWO_PAIR;
+                    } else if(h->rating == THREE_OF_A_KIND) {
+                        h->rating = FULL_HOUSE;
+                    } else {
+                        printf("impossible pairing\n");
+                    }
+                } break;
+
+                case 3: {
+                    if(h->rating == ONE_PAIR) {
+                        h->rating = THREE_OF_A_KIND;
+                    } else if(h->rating == TWO_PAIR) {
+                        h->rating = FULL_HOUSE;
+                    } else {
+                        printf("impossible trips\n");
+                    }
+                } break;
+
+                case 4: {
+                    if(h->rating == THREE_OF_A_KIND) {
+                        h->rating = FOUR_OF_A_KIND;
+                    } else {
+                        printf("impossible four of a kind\n");
+                    }
+                } break;
+
+                case 5: {
+                    if(h->rating == FOUR_OF_A_KIND) {
+                        h->rating = FIVE_OF_A_KIND;
+                    } else {
+                        printf("impossible five of a kind\n");
+                    }
+                } break;
+            }
+        }
+    }
+    for(int i = 0; i < joker_counter; i++) {
+        switch (h->rating) {
+            case HIGH_CARD: {
+                h->rating = ONE_PAIR;
             } break;
 
-            case 3: {
-                if(h->rating == ONE_PAIR) {
-                    h->rating = THREE_OF_A_KIND;
-                } else if(h->rating == TWO_PAIR) {
-                    h->rating = FULL_HOUSE;
-                } else {
-                    printf("impossible trips\n");
-                }
+            case ONE_PAIR: {
+                h->rating = THREE_OF_A_KIND;
             } break;
 
-            case 4: {
-                if(h->rating == THREE_OF_A_KIND) {
-                    h->rating = FOUR_OF_A_KIND;
-                } else {
-                    printf("impossible four of a kind\n");
-                }
+            case TWO_PAIR: {
+                h->rating = FULL_HOUSE;
             } break;
 
-            case 5: {
-                if(h->rating == FOUR_OF_A_KIND) {
-                    h->rating = FIVE_OF_A_KIND;
-                } else {
-                    printf("impossible five of a kind\n");
-                }
+            case THREE_OF_A_KIND: {
+                h->rating = FOUR_OF_A_KIND;
+            } break;
+
+            case FOUR_OF_A_KIND: {
+                h->rating = FIVE_OF_A_KIND;
+            } break;
+
+            default: {
+                printf("impossible application of joker\n");
             } break;
         }
     }
