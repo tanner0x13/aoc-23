@@ -24,6 +24,28 @@ long get_next_number(long *sequence, int len) {
     }
 }
 
+long get_prev_number(long *sequence, int len) {
+    int all_zero = 1;
+    for(int i = 0; i < len; i++) {
+        if(sequence[i] != 0) {
+            all_zero = 0;
+            break;
+        }
+    }
+
+    if(all_zero) {
+        return 0;
+    } else {
+        long *new_sequence = malloc(sizeof(long) * (len - 1));
+        for(int i = 1; i < len; i++) {
+            new_sequence[i-1] = sequence[i] - sequence[i-1];
+        }
+        long result = sequence[0] - get_prev_number(new_sequence, len - 1);
+        free(new_sequence);
+        return result;
+    }
+}
+
 int main(int argc, char *argv[]) {
     if(argc != 2) {
         printf("Usage: %s path/to/input\n", argv[0]);
@@ -51,7 +73,7 @@ int main(int argc, char *argv[]) {
                 sequence[len++] = num;
                 tok = strtok(NULL, " ");
             }
-            long next = get_next_number(sequence, len);
+            long next = get_prev_number(sequence, len);
             printf(" - %ld\n", next);
             sum += next;
         }
